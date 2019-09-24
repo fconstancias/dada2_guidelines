@@ -53,8 +53,18 @@ dir.create(file.path(output, "01_errors-output", name.run), showWarnings = FALSE
 output <- str_c(output,"/01_errors-output/",name.run,"/")
 
 ## ------------------------------------------------------------------------
-errF <- learnErrors(filtFs, multithread=TRUE)
-errR <- learnErrors(filtRs, multithread=TRUE)
+derepFs <- derepFastq(filtFs, verbose=TRUE)#n=1e4 # for qrsh purpose only
+derepRs <- derepFastq(filtRs, verbose=TRUE)
+
+# Name the derep-class objects by the sample names
+names(derepFs) <- sample.names
+names(derepRs) <- sample.names
+
+cat('\n# Dereplication done\n\n')
+
+## ------------------------------------------------------------------------
+errF <- learnErrors(derepFs, multithread=TRUE, MAX_CONSIST = 12, randomize = T)
+errR <- learnErrors(derepRs, multithread=TRUE, MAX_CONSIST = 12, randomize = T)
 
 ## ------------------------------------------------------------------------
 err.plotf <- plotErrors(errF, nominalQ=TRUE)
@@ -63,16 +73,6 @@ err.plotr <- plotErrors(errR, nominalQ=TRUE)
 ggsave(str_c(output,"errors_",name.run,"_rev.pdf"),plot=err.plotr, width = 9, height = 8)
 
 cat('\n# Errors learnt\n')
-
-## ------------------------------------------------------------------------
-derepFs <- derepFastq(filtFs, verbose=TRUE)
-derepRs <- derepFastq(filtRs, verbose=TRUE)
-
-# Name the derep-class objects by the sample names
-names(derepFs) <- sample.names
-names(derepRs) <- sample.names
-
-cat('\n# Dereplication done\n\n')
 
 ## ------------------------------------------------------------------------
 dadaFs <- dada(derepFs, err=errF, multithread=TRUE)
